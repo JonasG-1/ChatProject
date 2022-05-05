@@ -10,8 +10,7 @@ import java.io.InputStreamReader;
 public class Console extends Thread {
 
     private static ServerController kenntController;
-    private Debug hatDebug;
-    private List<Command> zBefehle;
+    private List<Command> hatBefehle;
     boolean lLaeuft = true;
 
     public void addController(ServerController pController) {
@@ -19,23 +18,24 @@ public class Console extends Thread {
     }
 
     private void setupCommands() {
-        zBefehle = new List<>();
-        zBefehle.append(new Admins());
-        zBefehle.append(new Stop());
-        zBefehle.append(new Kick());
-        zBefehle.append(new Bann());
-        zBefehle.append(new Entbann());
-        zBefehle.append(new BannIP());
-        zBefehle.append(new ListUsers());
-        zBefehle.append(new Nachricht());
+        hatBefehle = new List<>();
+        hatBefehle.append(new Admins());
+        hatBefehle.append(new Stop());
+        hatBefehle.append(new Kick());
+        hatBefehle.append(new Bann());
+        hatBefehle.append(new Entbann());
+        hatBefehle.append(new BannIP());
+        hatBefehle.append(new ListUsers());
+        hatBefehle.append(new Nachricht());
+        hatBefehle.append(new Debug());
     }
 
     public void run() {
         setupCommands();
-        hatDebug = new Debug();
+        Debugger hatDebugger = new Debugger();
         try (BufferedReader lLeser = new BufferedReader(new InputStreamReader(System.in))) {
-            hatDebug.print(GLOBAL_CONST.CONSOLE_NACHRICHTEN.GESTARTET);
-            String lEingabe = "a";
+            hatDebugger.print(GLOBAL_CONST.CONSOLE_NACHRICHTEN.GESTARTET);
+            String lEingabe;
             while (lLaeuft) {
                 lEingabe = lLeser.readLine();
                 int lLeer = lEingabe.indexOf(" ");
@@ -48,25 +48,25 @@ public class Console extends Thread {
                     lAusgabe = befehl(lBefehl, lArgumente);
                 }
                 if (!lAusgabe) {
-                    hatDebug.print("Der Eingegebene Befehl konnte nicht verarbeitet werden.", 0);
+                    hatDebugger.print("Der Eingegebene Befehl konnte nicht verarbeitet werden.", 0);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             kenntController.ausschalten();
-            hatDebug.print("Der Server wurde heruntergefahren.", 1);
+            hatDebugger.print("Der Server wurde heruntergefahren.", 1);
         }
     }
 
     public boolean befehl(String pBefehl, String pArgumente) {
-        zBefehle.toFirst();
-        while (zBefehle.hasAccess()) {
-            Command lBefehl = zBefehle.getContent();
+        hatBefehle.toFirst();
+        while (hatBefehle.hasAccess()) {
+            Command lBefehl = hatBefehle.getContent();
             if (lBefehl.istBefehl(pBefehl)) {
                 return lBefehl.run(pArgumente, kenntController, this);
             }
-            zBefehle.next();
+            hatBefehle.next();
         }
         return false;
     }

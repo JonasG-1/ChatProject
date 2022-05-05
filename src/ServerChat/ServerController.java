@@ -9,30 +9,28 @@ public class ServerController {
     private final static int PORT = 8888;
 
     private final ChatServer hatServer;
-    private final Debug hatDebug;
-    private final Console hatConsole;
+    private final Debugger hatDebugger;
     private final BenutzerVerwaltung hatVerwaltung;
-
 
     private final String[] zVerboteneZeichen;
     private final String[] zVerboteneZeichenNachricht;
     private boolean zSendeListe = false;
 
     public ServerController(boolean pDebug) {
-        hatServer = new ChatServer(PORT, false, this);
-        Debug.setzeDebug(pDebug);
-        hatDebug = new Debug();
-        hatConsole = new Console();
+        hatDebugger = new Debugger();
+        hatDebugger.setzeDebug(pDebug);
+        Console hatConsole = new Console();
         hatConsole.addController(this);
         hatConsole.start();
         hatVerwaltung = new BenutzerVerwaltung();
-
         zVerboteneZeichen = new String[]{"\\s+", ",", ":", " ", ".", "Admin", "Konsole", "Console"};
-        zVerboteneZeichenNachricht = new String[]{};
+        zVerboteneZeichenNachricht = new String[]{""};
+
+        hatServer = new ChatServer(PORT, false, this);
+        hatDebugger.debug("Server gestartet.");
     }
 
-    public String neueVerbindung(String pIP, int pPort) {
-        String lAdresse = erstelleAdresse(pIP, pPort);
+    public String neueVerbindung(String pIP) {
         if (hatVerwaltung.istGebannt(pIP)) {
             return GLOBAL_CONST.ERR + GLOBAL_CONST.NUTZER_GEBANNT;
         }
@@ -67,9 +65,9 @@ public class ServerController {
         String lAktion = lAktionen.getContent();
         lAktionen.remove();
         if (pTyp.equals(GLOBAL_CONST.CLIENT_BEFEHLE.OK)) {
-            hatDebug.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.AKTION_ERFOLGREICH, lAdresse, lAktion, pArgumente));
+            hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.AKTION_ERFOLGREICH, lAdresse, lAktion, pArgumente));
         } else if (pTyp.equals(GLOBAL_CONST.CLIENT_BEFEHLE.ERR)) {
-            hatDebug.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.AKTION_FEHLGESCHLAGEN, lAdresse, lAktion, pArgumente));
+            hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.AKTION_FEHLGESCHLAGEN, lAdresse, lAktion, pArgumente));
         }
     }
 
@@ -91,7 +89,7 @@ public class ServerController {
 
         hatVerwaltung.verbindungHinzufuegen(lAdresse, pName);
         zSendeListe = true;
-        hatDebug.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.ANMELDUNG, lAdresse, pName));
+        hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.ANMELDUNG, lAdresse, pName));
         return GLOBAL_CONST.OK + String.format(GLOBAL_CONST.ANGEMELDET, pName);
     }
 
@@ -104,7 +102,7 @@ public class ServerController {
             lAusgang.append(lNamen.getContent()).append(",");
             lNamen.next();
         }
-        hatDebug.debug(GLOBAL_CONST.DEBUG_NACHRICHTEN.LISTE);
+        hatDebugger.debug(GLOBAL_CONST.DEBUG_NACHRICHTEN.LISTE);
         lAusgang.replace(lAusgang.length() - 1, lAusgang.length(), "");
         alleAnhaengen(lAusgang.toString());
         hatServer.sendToAll(lAusgang.toString());
@@ -122,7 +120,7 @@ public class ServerController {
         String lName = hatVerwaltung.gibName(lAdresse);
         String lAusgang = GLOBAL_CONST.SERVER_BEFEHLE.NACHRICHT + " " + lName + " " + pNachricht;
         alleAnhaengen(lAusgang);
-        hatDebug.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.NACHRICHT, lAdresse, lName, pNachricht));
+        hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.NACHRICHT, lAdresse, lName, pNachricht));
         hatServer.sendToAll(lAusgang);
         return GLOBAL_CONST.OK + GLOBAL_CONST.NACHRICHT_UEBERMITTELT;
     }
@@ -158,7 +156,7 @@ public class ServerController {
         String lAusgang = GLOBAL_CONST.SERVER_BEFEHLE.PRIVATE_NACHRICHT + " " + lNameSender + " " + lNachricht;
 
         hatVerwaltung.gibAktionListe(lAdresseEmpfaenger).append(lAusgang);
-        hatDebug.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.PRIVATE_NACHRICHT, lAdresseSender, lNameSender, lNameEmpfaenger, lAdresseEmpfaenger, lNachricht));
+        hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.PRIVATE_NACHRICHT, lAdresseSender, lNameSender, lNameEmpfaenger, lAdresseEmpfaenger, lNachricht));
         hatServer.send(lIPEmpfaenger, lPortEmpfaenger, lAusgang);
         return GLOBAL_CONST.OK + GLOBAL_CONST.NACHRICHT_UEBERMITTELT;
     }
@@ -178,7 +176,7 @@ public class ServerController {
     public void verbindungTrennen(String pIP, int pPort) {
         String lAdresse = erstelleAdresse(pIP, pPort);
         if (!hatVerwaltung.istGebannt(pIP)) {
-            hatDebug.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.VERBINDUNG_TRENNEN, lAdresse));
+            hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.VERBINDUNG_TRENNEN, lAdresse));
         }
 
         String lName = hatVerwaltung.gibName(lAdresse);
@@ -188,7 +186,7 @@ public class ServerController {
         hatVerwaltung.verbindungEntfernen(lAdresse);
 
         if (!hatVerwaltung.istGebannt(pIP)) {
-            hatDebug.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.VERBINDUNG_GETRENNT, lAdresse, lName));
+            hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.VERBINDUNG_GETRENNT, lAdresse, lName));
         }
     }
 
@@ -245,8 +243,7 @@ public class ServerController {
         if (lListe == null) {
             return "";
         }
-        for (int i = 0; i < lListe.length; i++) {
-            String lAdresse = lListe[i];
+        for (String lAdresse : lListe) {
             String lName = hatVerwaltung.gibName(lAdresse);
             lAdmins.append(lAdresse).append(" [").append(lName).append("]");
             lAdmins.append(", ");
@@ -258,11 +255,11 @@ public class ServerController {
     public void ausschalten() {
         String lBefehl = GLOBAL_CONST.CLIENT_BEFEHLE.VERBINDUNG_TRENNEN;
         alleAnhaengen(lBefehl);
-        hatDebug.debug("Sendet die Abschaltung an alle Verbindungen.");
+        hatDebugger.debug("Sendet die Abschaltung an alle Verbindungen.");
         hatServer.sendToAll(lBefehl);
-        hatDebug.debug("Die Verbindung wird geschlossen.");
+        hatDebugger.debug("Die Verbindung wird geschlossen.");
         hatServer.close();
-        hatDebug.debug("Der Port \"" + PORT + "\" wurde freigegeben.");
+        hatDebugger.debug("Der Port \"" + PORT + "\" wurde freigegeben.");
     }
 
     public boolean nutzerKicken(String pAdresse) {
@@ -273,7 +270,7 @@ public class ServerController {
         int lPort = gibPort(pAdresse);
         hatServer.send(lIP, lPort, GLOBAL_CONST.SERVER_BEFEHLE.TRENNEN);
         hatServer.closeConnection(lIP, lPort);
-        hatDebug.debug("Test");
+        hatDebugger.debug("Test");
         return true;
     }
 

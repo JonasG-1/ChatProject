@@ -18,7 +18,7 @@ public class BannIP implements Command {
         BenutzerVerwaltung lVerwaltung = pController.gibVerwaltung();
         for (String lIP : lIPs) {
             if (lVerwaltung.istGebannt(lIP)) {
-                hatDebug.print(String.format("\"%s\" ist bereits gebannt.", lIP), 0);
+                hatDebugger.print(String.format("\"%s\" ist bereits gebannt.", lIP), 0);
                 return true;
             }
             lVerwaltung.bannHinzufuegen(lIP);
@@ -28,7 +28,7 @@ public class BannIP implements Command {
                 pController.nutzerKicken(lListe.getContent());
                 lListe.next();
             }
-            hatDebug.print(String.format("\"%s\" wurde gebannt.", lIP), 1);
+            hatDebugger.print(String.format("\"%s\" wurde gebannt.", lIP), 1);
         }
         return true;
     }

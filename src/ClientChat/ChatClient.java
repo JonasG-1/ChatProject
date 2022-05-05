@@ -1,7 +1,5 @@
 package ClientChat;
 
-import java.util.Scanner;
-
 import Constants.GLOBAL_CONST;
 import netzwerk.Client;
 

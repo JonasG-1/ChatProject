@@ -144,10 +144,6 @@ public class Oberflaeche extends EBAnwendung {
         return hatTextfeldName.inhaltAlsText();
     }
 
-    public String gibChatEingabe() {
-        return hatTextfeldChat.inhaltAlsText();
-    }
-
     public boolean gibPrivat() {
         return hatSchalterPrivat.angeschaltet();
     }

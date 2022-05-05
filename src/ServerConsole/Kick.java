@@ -18,12 +18,12 @@ public class Kick implements Command {
             if (lVerwaltung.nameExistiert(lNaman)) {
                 boolean lErfolg = pController.nutzerKicken(lVerwaltung.gibVerbindung(lNaman));
                 if (!lErfolg) {
-                    hatDebug.print(String.format("\"%s\" konnte nicht entfernt werden.", lNaman), 0);
+                    hatDebugger.print(String.format("\"%s\" konnte nicht entfernt werden.", lNaman), 0);
                 } else {
-                    hatDebug.print(String.format("\"%s\" wurde entfernt.", lNaman), 1);
+                    hatDebugger.print(String.format("\"%s\" wurde entfernt.", lNaman), 1);
                 }
             } else {
-                hatDebug.print(String.format("\"%s\" ist nicht mit dem Server verbunden.", lNaman), 0);
+                hatDebugger.print(String.format("\"%s\" ist nicht mit dem Server verbunden.", lNaman), 0);
             }
         }
         return true;

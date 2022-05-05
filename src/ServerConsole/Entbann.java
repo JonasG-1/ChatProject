@@ -17,9 +17,9 @@ public class Entbann implements Command {
         for (String lIP : lIPs) {
             if (lVerwaltung.istGebannt(lIP)) {
                 lVerwaltung.bannEntfernen(lIP);
-                hatDebug.print(String.format("\"%s\" wurde entbannt.", lIP), 1);
+                hatDebugger.print(String.format("\"%s\" wurde entbannt.", lIP), 1);
             } else {
-                hatDebug.print(String.format("\"%s\" ist nicht gebannt.", lIP), 0);
+                hatDebugger.print(String.format("\"%s\" ist nicht gebannt.", lIP), 0);
             }
         }
         return true;

@@ -17,9 +17,9 @@ public class Nachricht implements Command {
         if (!pArgumente.isEmpty()) {
             String lBefehl = GLOBAL_CONST.SERVER_BEFEHLE.NACHRICHT + " Konsole ";
             lServer.sendToAll(lBefehl + pArgumente);
-            hatDebug.print("Nachricht gesendet.", 1);
+            hatDebugger.print("Nachricht gesendet.", 1);
         } else {
-            hatDebug.print("Die Nachricht darf nicht leer sein.", 0);
+            hatDebugger.print("Die Nachricht darf nicht leer sein.", 0);
         }
         return true;
     }

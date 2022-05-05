@@ -1,31 +1,31 @@
 package ServerConsole;
 
-import Constants.GLOBAL_CONST;
+import ServerChat.ServerController;
 
-public class Debug {
-    private static boolean zDebug = false;
+public class Debug implements Command {
 
-    public static void setzeDebug(boolean pDebug) {
-        zDebug = pDebug;
-    }
-
-    public void debug(String pNachricht) {
-        if (zDebug) {
-            System.out.println(GLOBAL_CONST.DEBUG_PREFIX + pNachricht);
+    @Override
+    public boolean istBefehl(String pBefehl) {
+        if (pBefehl.isEmpty()) {
+            hatDebugger.ausgabeAnhalten();
+            return true;
         }
+        return pBefehl.equalsIgnoreCase("debug");
     }
 
-    public void print(String pNachricht) {
-        System.out.println(GLOBAL_CONST.CONSOLE_PREFIX + pNachricht);
-    }
-
-    public void print(String pNachricht, int pTyp) {
-        if (pTyp == 0) {
-            System.out.println(GLOBAL_CONST.CONSOLE_PREFIX + GLOBAL_CONST.CONSOLE_NACHRICHTEN.FEHLER + pNachricht);
-        } else if (pTyp == 1) {
-            System.out.println(GLOBAL_CONST.CONSOLE_PREFIX + GLOBAL_CONST.CONSOLE_NACHRICHTEN.ERFOLG + pNachricht);
-        } else if (pTyp == 2) {
-            System.out.println(GLOBAL_CONST.CONSOLE_PREFIX + GLOBAL_CONST.CONSOLE_NACHRICHTEN.INFO + pNachricht);
+    @Override
+    public boolean run(String pArgumente, ServerController pController, Console pConsole) {
+        if (pArgumente.equalsIgnoreCase("on")) {
+            hatDebugger.print("Der Dienst wird fortgesetzt.", 1);
+            hatDebugger.setzeDebug(true);
+        } else if (pArgumente.equalsIgnoreCase("off")){
+            hatDebugger.setzeDebug(false);
+            hatDebugger.print("Der Dienst wurde eingestellt.", 1);
+        } else if (pArgumente.isEmpty()) {
+            return true;
+        } else {
+            hatDebugger.print("Befehl \"debug\": Argumente sind: \"on\", \"off\"", 2);
         }
+        return true;
     }
 }

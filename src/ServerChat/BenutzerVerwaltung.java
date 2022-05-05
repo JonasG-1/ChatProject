@@ -9,7 +9,6 @@ public class BenutzerVerwaltung {
     private final HashMap<String, String> zNamenZuIP;
     private final HashMap<String, String> zIPZuNamen;
     private final HashMap<String, List<String>> zAktionen;
-    private final HashMap<String, String> zLetzteNachricht;
     private final List<String> zNamenListe;
     private final List<String> zAdressen;
     private final List<String> zAdmins;
@@ -19,7 +18,6 @@ public class BenutzerVerwaltung {
         zNamenZuIP = new HashMap<>();
         zIPZuNamen = new HashMap<>();
         zAktionen = new HashMap<>();
-        zLetzteNachricht = new HashMap<>();
         zNamenListe = new List<>();
         zAdressen = new List<>();
         zAdmins = new List<>();
@@ -37,7 +35,7 @@ public class BenutzerVerwaltung {
         zNamenListe.append(pName);
     }
 
-    public boolean verbindungEntfernen(String pAdresse) {
+    public void verbindungEntfernen(String pAdresse) {
         if (istVerbunden(pAdresse)) {
             zAdressen.toFirst();
             while (zAdressen.hasAccess()) {
@@ -59,9 +57,7 @@ public class BenutzerVerwaltung {
                 }
                 zNamenListe.next();
             }
-            return true;
         }
-        return false;
     }
 
     public boolean istAngemeldet(String pAdresse) {

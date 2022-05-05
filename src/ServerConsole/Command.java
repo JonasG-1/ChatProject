@@ -4,7 +4,7 @@ import ServerChat.ServerController;
 
 public interface Command {
 
-    Debug hatDebug = new Debug();
+    Debugger hatDebugger = new Debugger();
 
     boolean istBefehl(String pBefehl);
 

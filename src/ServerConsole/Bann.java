@@ -14,17 +14,17 @@ public class Bann implements Command {
     public boolean run(String pArgumente, ServerController pController, Console pConsole) {
         String[] lNamen = pArgumente.split(",");
         BenutzerVerwaltung lVerwaltung = pController.gibVerwaltung();
-        for (String lNaman : lNamen) {
-            if (lVerwaltung.nameExistiert(lNaman)) {
-                lVerwaltung.bannHinzufuegen(pController.gibIP(lVerwaltung.gibVerbindung(lNaman)));
-                boolean lErfolg = pController.nutzerKicken(lVerwaltung.gibVerbindung(lNaman));
+        for (String lName : lNamen) {
+            if (lVerwaltung.nameExistiert(lName)) {
+                lVerwaltung.bannHinzufuegen(pController.gibIP(lVerwaltung.gibVerbindung(lName)));
+                boolean lErfolg = pController.nutzerKicken(lVerwaltung.gibVerbindung(lName));
                 if (!lErfolg) {
-                    hatDebug.print(String.format("\"%s\" konnte nicht gebannt werden.", lNaman), 0);
+                    hatDebugger.print(String.format("\"%s\" konnte nicht gebannt werden.", lName), 0);
                 } else {
-                    hatDebug.print(String.format("\"%s\" wurde gebannt.", lNaman), 1);
+                    hatDebugger.print(String.format("\"%s\" wurde gebannt.", lName), 1);
                 }
             } else {
-                hatDebug.print(String.format("\"%s\" ist nicht mit dem Server verbunden.", lNaman), 0);
+                hatDebugger.print(String.format("\"%s\" ist nicht mit dem Server verbunden.", lName), 0);
             }
         }
         return true;

@@ -28,7 +28,7 @@ public class ListUsers implements Command {
             lAusgang.replace(lAusgang.length() - 2, lAusgang.length(), "");
         }
         if (lVerbundene == 0) {
-            hatDebug.print("Niemand ist mit dem Server verbunden.", 2);
+            hatDebugger.print("Niemand ist mit dem Server verbunden.", 2);
             return true;
         }
         StringBuilder lVerbundenAusgabe = new StringBuilder(" verbundene");
@@ -41,9 +41,9 @@ public class ListUsers implements Command {
             lAngemeldetAusgabe.append("r");
         }
         lAngemeldetAusgabe.append(" Nutzer.");
-        hatDebug.print(lVerbundene + lVerbundenAusgabe.toString() + lAngemeldete + lAngemeldetAusgabe, 2);
+        hatDebugger.print(lVerbundene + lVerbundenAusgabe.toString() + lAngemeldete + lAngemeldetAusgabe, 2);
         if (lAngemeldete > 0) {
-            hatDebug.print("Liste der angemeldeten Nutzer: " + lAusgang.toString());
+            hatDebugger.print("Liste der angemeldeten Nutzer: " + lAusgang);
         }
         return true;
     }

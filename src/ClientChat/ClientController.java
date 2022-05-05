@@ -10,8 +10,7 @@ public class ClientController {
 
     private final Oberflaeche hatOberflaeche;
     private ChatClient hatClient;
-    private List<String> zAktionen;
-    private String zName;
+    private final List<String> zAktionen;
     private boolean zBeenden = false;
 
     public ClientController() {
@@ -121,10 +120,10 @@ public class ClientController {
         }
         String lAntwort = lConnection.receive();
         lConnection.close();
-        //if (!lAntwort.startsWith(GLOBAL_CONST.CLIENT_BEFEHLE.OK)) {
-            //hatOberflaeche.setzeStatus("Es konnte keine Verbindung hergestellt werden");
-          //  return;
-        //}
+        if (lAntwort.startsWith(GLOBAL_CONST.CLIENT_BEFEHLE.ERR)) {
+            hatOberflaeche.setzeStatus("Es konnte keine Verbindung hergestellt werden");
+            return;
+        }
         hatClient = new ChatClient(lIP, lPort, this);
         hatOberflaeche.statusVerbunden();
         hatOberflaeche.setzeStatus("Verbunden");
@@ -155,7 +154,7 @@ public class ClientController {
 
     public String liste(String pListe) {
         String[] lListe = pListe.split(",");
-        int lAnzahl = 0;
+        int lAnzahl;
         try {
             lAnzahl = Integer.parseInt(lListe[0]);
         } catch (Exception e) {
