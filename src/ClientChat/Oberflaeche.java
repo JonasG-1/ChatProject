@@ -1,5 +1,7 @@
 package ClientChat;
 
+ 
+
 import sum.ereignis.*;
 import sum.komponenten.*;
 
@@ -95,7 +97,7 @@ public class Oberflaeche extends EBAnwendung {
         } else if (zStatus == 1) {
             kenntController.anmelden();
         } else if (zStatus == 2) {
-            kenntController.trennen(false);
+            kenntController.trennen();
         }
     }
 

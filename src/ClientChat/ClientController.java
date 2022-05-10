@@ -1,5 +1,7 @@
 package ClientChat;
 
+ 
+
 import Constants.GLOBAL_CONST;
 import linearestrukturen.List;
 import netzwerk.Connection;
@@ -8,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ClientController {
 
+    private String zName;
     private final Oberflaeche hatOberflaeche;
     private ChatClient hatClient;
     private final List<String> zAktionen;
@@ -61,7 +64,7 @@ public class ClientController {
             }
         } else if (lAktion.startsWith(GLOBAL_CONST.CLIENT_BEFEHLE.PRIVATE_NACHRICHT)) {
             if (pTyp.equals(GLOBAL_CONST.CLIENT_BEFEHLE.OK)) {
-                System.out.println("a");
+                
                 hatOberflaeche.setzeChatStatus("Private Nachricht gesendet.");                
                 int lLeer = lAktion.indexOf(" ");
                 String lArgumente = lAktion.substring(lLeer + 1);
@@ -71,7 +74,6 @@ public class ClientController {
                 String lNachricht = lArgumente.substring(lLeer + 1);
                 hatOberflaeche.haengeChatAn(lNachricht);
             } else if (pTyp.equals(GLOBAL_CONST.CLIENT_BEFEHLE.ERR)) {
-                System.out.println("b");
                 hatOberflaeche.setzeChatStatus("Ein Fehler ist aufgetreten: " + pArgumente);
             }
         } else if (lAktion.startsWith(GLOBAL_CONST.CLIENT_BEFEHLE.VERBINDUNG_TRENNEN)) {
@@ -123,8 +125,7 @@ public class ClientController {
         if (lAntwort.startsWith(GLOBAL_CONST.CLIENT_BEFEHLE.ERR)) {
             hatOberflaeche.setzeStatus("Es konnte keine Verbindung hergestellt werden");
             return;
-        }
-        hatClient = new ChatClient(lIP, lPort, this);
+        }              
         hatOberflaeche.statusVerbunden();
         hatOberflaeche.setzeStatus("Verbunden");
     }
@@ -132,8 +133,8 @@ public class ClientController {
     public void anmelden() {
         zAktionen.toFirst();
         if (!zAktionen.hasAccess()) {
-            String lName = hatOberflaeche.gibName();
-            String lBefehl = GLOBAL_CONST.CLIENT_BEFEHLE.NAME + " " + lName;
+            zName = hatOberflaeche.gibName();
+            String lBefehl = GLOBAL_CONST.CLIENT_BEFEHLE.NAME + " " + zName;
             zAktionen.append(lBefehl);
             hatClient.send(lBefehl);
         } else {
@@ -141,9 +142,9 @@ public class ClientController {
         }
     }
 
-    public void trennen(boolean force) {
+    public void trennen() {
         zAktionen.toFirst();
-        if (!zAktionen.hasAccess() || force) {
+        if (!zAktionen.hasAccess()) {
             String lBefehl = GLOBAL_CONST.CLIENT_BEFEHLE.VERBINDUNG_TRENNEN;
             zAktionen.append(lBefehl);
             hatClient.send(lBefehl);
@@ -174,7 +175,10 @@ public class ClientController {
             zAktionen.toFirst();
             if (!zAktionen.hasAccess()) {
                 if (hatOberflaeche.gibPrivat()) {
-                    
+                    if (hatOberflaeche.gibPrivatNamen().equals(zName)) {
+                        hatOberflaeche.setzeChatStatus("Dumm?");
+                        return;
+                    }
                     StringBuilder lBefehl = new StringBuilder(GLOBAL_CONST.CLIENT_BEFEHLE.PRIVATE_NACHRICHT);
                     lBefehl.append(" ").append(hatOberflaeche.gibPrivatNamen());
                     lBefehl.append(" ").append(pNachricht);
@@ -199,6 +203,11 @@ public class ClientController {
         String lName = pArgumente.substring(0, lLeer);
         String lNachricht = pArgumente.substring(lLeer + 1);
         if (pPrivat) {
+            if (zName.equals(lName)) {
+                hatOberflaeche.haengeChatAn("Private Nachricht an " + hatOberflaeche.gibPrivatNamen() + ":");
+                hatOberflaeche.haengeChatAn(lNachricht);
+                return GLOBAL_CONST.OK;
+            }
             hatOberflaeche.haengeChatAn("Private Nachricht von " + lName + ":");
         } else {
             hatOberflaeche.haengeChatAn("Nachricht von " + lName + ":");
@@ -210,6 +219,6 @@ public class ClientController {
 
     public void beenden() {
         zBeenden = true;
-        trennen(true);
+        trennen();
     }
 }

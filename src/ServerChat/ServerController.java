@@ -24,7 +24,7 @@ public class ServerController {
         hatConsole.start();
         hatVerwaltung = new BenutzerVerwaltung();
         zVerboteneZeichen = new String[]{"\\s+", ",", ":", " ", ".", "Admin", "Konsole", "Console"};
-        zVerboteneZeichenNachricht = new String[]{""};
+        zVerboteneZeichenNachricht = new String[]{};
 
         hatServer = new ChatServer(PORT, false, this);
         hatDebugger.debug("Server gestartet.");
@@ -151,12 +151,16 @@ public class ServerController {
         String lAdresseEmpfaenger = hatVerwaltung.gibVerbindung(lNameEmpfaenger);
         String lIPEmpfaenger = gibIP(lAdresseEmpfaenger);
         int lPortEmpfaenger = gibPort(lAdresseEmpfaenger);
+
         String lNameSender = hatVerwaltung.gibName(lAdresseSender);
 
         String lAusgang = GLOBAL_CONST.SERVER_BEFEHLE.PRIVATE_NACHRICHT + " " + lNameSender + " " + lNachricht;
 
         hatVerwaltung.gibAktionListe(lAdresseEmpfaenger).append(lAusgang);
         hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.PRIVATE_NACHRICHT, lAdresseSender, lNameSender, lNameEmpfaenger, lAdresseEmpfaenger, lNachricht));
+        if (!lNameSender.equals(lNameEmpfaenger)) {
+            hatServer.send(pIP, pPort, lAusgang);
+        }
         hatServer.send(lIPEmpfaenger, lPortEmpfaenger, lAusgang);
         return GLOBAL_CONST.OK + GLOBAL_CONST.NACHRICHT_UEBERMITTELT;
     }
