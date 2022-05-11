@@ -1,6 +1,7 @@
 package ServerConsole;
 
 import ServerChat.ServerController;
+import ServerChat.StartServer;
 
 public class Stop implements Command {
 
@@ -16,6 +17,7 @@ public class Stop implements Command {
         }
         hatDebugger.print("Der Server wird heruntergefahren, bitte warten...", 2);
         pConsole.lLaeuft = false;
+        StartServer.setzeSchleife(false);
         return true;
     }
 }
