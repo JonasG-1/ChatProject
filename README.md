@@ -87,6 +87,8 @@ Liste der Befehle für die Konsole:
 - debug on
 - debug off
 
+(Außerdem kann die Konsole für 20 Sekunden pausiert werden, wenn [Enter] gedrückt wird)
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
