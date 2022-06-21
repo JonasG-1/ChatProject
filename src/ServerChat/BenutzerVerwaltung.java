@@ -6,22 +6,22 @@ import java.util.HashMap;
 
 public class BenutzerVerwaltung {
 
-    private final HashMap<String, String> zNamenZuIP;
-    private final HashMap<String, String> zIPZuNamen;
-    private final HashMap<String, List<String>> zAktionen;
-    private final List<String> zNamenListe;
+    private final HashMap<String, String> zNamenZuAdressen;
+    private final HashMap<String, String> zAdressenZuNamen;
+    private final HashMap<String, List<String>> zAdressenZuAktionen;
+    private final List<String> zNamen;
     private final List<String> zAdressen;
-    private final List<String> zAdmins;
-    private final List<String> zGebannt;
+    private final List<String> zAdminAdressen;
+    private final List<String> zGebannteAdressen;
 
     public BenutzerVerwaltung() {
-        zNamenZuIP = new HashMap<>();
-        zIPZuNamen = new HashMap<>();
-        zAktionen = new HashMap<>();
-        zNamenListe = new List<>();
+        zNamenZuAdressen = new HashMap<>();
+        zAdressenZuNamen = new HashMap<>();
+        zAdressenZuAktionen = new HashMap<>();
+        zNamen = new List<>();
         zAdressen = new List<>();
-        zAdmins = new List<>();
-        zGebannt = new List<>();
+        zAdminAdressen = new List<>();
+        zGebannteAdressen = new List<>();
     }
 
     public void neueVerbindung(String pAdresse) {
@@ -29,10 +29,10 @@ public class BenutzerVerwaltung {
     }
 
     public void verbindungHinzufuegen(String pAdresse, String pName) {
-        zNamenZuIP.put(pName, pAdresse);
-        zIPZuNamen.put(pAdresse, pName);
-        zAktionen.put(pAdresse, new List<>());
-        zNamenListe.append(pName);
+        zNamenZuAdressen.put(pName, pAdresse);
+        zAdressenZuNamen.put(pAdresse, pName);
+        zAdressenZuAktionen.put(pAdresse, new List<>());
+        zNamen.append(pName);
     }
 
     public void verbindungEntfernen(String pAdresse) {
@@ -46,22 +46,22 @@ public class BenutzerVerwaltung {
             }
         }
         if (istAngemeldet(pAdresse)) {
-            String lName = zIPZuNamen.get(pAdresse);
-            zNamenZuIP.remove(lName);
-            zIPZuNamen.remove(pAdresse);
-            zAktionen.remove(pAdresse);
-            zNamenListe.toFirst();
-            while (zNamenListe.hasAccess()) {
-                if (zNamenListe.getContent().equals(lName)) {
-                    zNamenListe.remove();
+            String lName = zAdressenZuNamen.get(pAdresse);
+            zNamenZuAdressen.remove(lName);
+            zAdressenZuNamen.remove(pAdresse);
+            zAdressenZuAktionen.remove(pAdresse);
+            zNamen.toFirst();
+            while (zNamen.hasAccess()) {
+                if (zNamen.getContent().equals(lName)) {
+                    zNamen.remove();
                 }
-                zNamenListe.next();
+                zNamen.next();
             }
         }
     }
 
     public boolean istAngemeldet(String pAdresse) {
-        return zIPZuNamen.containsKey(pAdresse);
+        return zAdressenZuNamen.containsKey(pAdresse);
     }
 
     public boolean istVerbunden(String pAdresse) {
@@ -76,23 +76,23 @@ public class BenutzerVerwaltung {
     }
 
     public boolean nameExistiert(String pName) {
-        return zNamenZuIP.containsKey(pName);
+        return zNamenZuAdressen.containsKey(pName);
     }
 
     public String gibVerbindung(String pName) {
-        return zNamenZuIP.get(pName);
+        return zNamenZuAdressen.get(pName);
     }
 
     public String gibName(String pAdresse) {
-        return zIPZuNamen.get(pAdresse);
+        return zAdressenZuNamen.get(pAdresse);
     }
 
     public List<String> gibAktionListe(String pAdresse) {
-        return zAktionen.get(pAdresse);
+        return zAdressenZuAktionen.get(pAdresse);
     }
 
     public List<String> gibNamenListe() {
-        return zNamenListe;
+        return zNamen;
     }
 
     public List<String> gibAdressenListe() {
@@ -100,15 +100,15 @@ public class BenutzerVerwaltung {
     }
 
     public void adminHinzufuegen(String pAdresse) {
-        zAdmins.append(pAdresse);
+        zAdminAdressen.append(pAdresse);
     }
 
     public boolean istAdmin(String pAdresse, boolean pEntfernen) {
-        zAdmins.toFirst();
-        while (zAdmins.hasAccess()) {
-            if (zAdmins.getContent().equals(pAdresse)) {
+        zAdminAdressen.toFirst();
+        while (zAdminAdressen.hasAccess()) {
+            if (zAdminAdressen.getContent().equals(pAdresse)) {
                 if (pEntfernen) {
-                    zAdmins.remove();
+                    zAdminAdressen.remove();
                 }
                 return true;
             }
@@ -117,37 +117,37 @@ public class BenutzerVerwaltung {
     }
 
     public String[] gibAdmins() {
-        if (zAdmins.length() == 0) {
+        if (zAdminAdressen.length() == 0) {
             return null;
         }
-        zAdmins.toFirst();
-        String[] lAdmins = new String[zAdmins.length()];
+        zAdminAdressen.toFirst();
+        String[] lAdmins = new String[zAdminAdressen.length()];
         for (int i = 0; i < lAdmins.length; i++) {
-            lAdmins[i] = zAdmins.getContent();
-            zAdmins.next();
+            lAdmins[i] = zAdminAdressen.getContent();
+            zAdminAdressen.next();
         }
         return lAdmins;
     }
 
     public boolean istGebannt(String pIP) {
-        zGebannt.toFirst();
-        while (zGebannt.hasAccess()) {
-            if (zGebannt.getContent().equals(pIP)) {
+        zGebannteAdressen.toFirst();
+        while (zGebannteAdressen.hasAccess()) {
+            if (zGebannteAdressen.getContent().equals(pIP)) {
                 return true;
             }
-            zGebannt.next();
+            zGebannteAdressen.next();
         }
         return false;
     }
 
     public void bannHinzufuegen(String pIP) {
-        zGebannt.append(pIP);
+        zGebannteAdressen.append(pIP);
     }
 
     public void bannEntfernen(String pIP) {
         boolean lGebannt = istGebannt(pIP);
         if (lGebannt) {
-            zGebannt.remove();
+            zGebannteAdressen.remove();
         }
     }
 
