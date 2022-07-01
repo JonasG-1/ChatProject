@@ -6,12 +6,12 @@
 
 
 <br />
-<div style="text-align: center" id="top">
+<div align="center" id="top">
 
-<h1 style="text-align: center">ChatProject</h1>
+<h1 align="center">ChatProject</h1>
 <hr />
 
-  <p style="text-align: center">Chat Projekt vom FSG (IFLK Q1)</p>
+  <p align="center">Chat Projekt vom FSG (IFLK Q1)</p>
     <br />
 </div>
 
@@ -64,7 +64,7 @@ Klonen des Projekts in der Befehlszeile mit:
 - Starten des Servers über "main"-Methode in "StartServer.java" im Packet "ServerChat".
 - Starten des Clients über "main"-Methode in "StartClient.java" im Packet "ClientChat".
 
-<p style="text-align: right">(<a href="#top">back to top</a>)</p>
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 
 <!-- USAGE EXAMPLES -->
@@ -89,7 +89,7 @@ Liste der Befehle für die Konsole:
 
 (Außerdem kann die Konsole für 20 Sekunden pausiert werden, wenn [Enter] gedrückt wird)
 
-<p style="text-align: right">(<a href="#top">back to top</a>)</p>
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Protokoll
 | Client -> Server               | Server -> Client                                                         |
@@ -103,7 +103,7 @@ Liste der Befehle für die Konsole:
 | +OK<br/>-ERR                   | NACHRICHT [Name] [Nachricht]                                             |
 | +OK<br/>-ERR                   | PRIVATNACHRICHT [Name] [Nachricht] (Wird an Sender & empfänger gesendet) |
 
-<p style="text-align: right">(<a href="#top">back to top</a>)</p>
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
