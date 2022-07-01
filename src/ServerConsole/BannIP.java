@@ -22,11 +22,9 @@ public class BannIP implements Command {
                 return true;
             }
             lVerwaltung.bannHinzufuegen(lIP);
-            List<String> lListe = lVerwaltung.gibAdressenMitIP(lIP);
-            lListe.toFirst();
-            while (lListe.hasAccess()) {
-                pController.nutzerKicken(lListe.getContent());
-                lListe.next();
+            String[] lListe = lVerwaltung.gibAdressenMitIP(lIP);
+            for (String s : lListe) {
+                pController.nutzerKicken(s);
             }
             hatDebugger.print(String.format("\"%s\" wurde gebannt.", lIP), 1);
         }

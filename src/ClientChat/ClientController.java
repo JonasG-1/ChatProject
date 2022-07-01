@@ -125,7 +125,8 @@ public class ClientController {
         if (lAntwort.startsWith(GLOBAL_CONST.CLIENT_BEFEHLE.ERR)) {
             hatOberflaeche.setzeStatus("Es konnte keine Verbindung hergestellt werden");
             return;
-        }              
+        }
+        hatClient = new ChatClient(lIP, lPort, this);
         hatOberflaeche.statusVerbunden();
         hatOberflaeche.setzeStatus("Verbunden");
     }

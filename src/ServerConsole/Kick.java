@@ -14,16 +14,21 @@ public class Kick implements Command {
     public boolean run(String pArgumente, ServerController pController, Console pConsole) {
         String[] lNamen = pArgumente.split(",");
         BenutzerVerwaltung lVerwaltung = pController.gibVerwaltung();
-        for (String lNaman : lNamen) {
-            if (lVerwaltung.nameExistiert(lNaman)) {
-                boolean lErfolg = pController.nutzerKicken(lVerwaltung.gibVerbindung(lNaman));
+        for (String lName : lNamen) {
+            if (lVerwaltung.nameExistiert(lName)) {
+                boolean lErfolg = false;
+                try {
+                    lErfolg = pController.nutzerKicken(lVerwaltung.gibAdresse(lName));
+                } catch (NoSuchFieldException lFehler) {
+                    lFehler.printStackTrace();
+                }
                 if (!lErfolg) {
-                    hatDebugger.print(String.format("\"%s\" konnte nicht entfernt werden.", lNaman), 0);
+                    hatDebugger.print(String.format("\"%s\" konnte nicht entfernt werden.", lName), 0);
                 } else {
-                    hatDebugger.print(String.format("\"%s\" wurde entfernt.", lNaman), 1);
+                    hatDebugger.print(String.format("\"%s\" wurde entfernt.", lName), 1);
                 }
             } else {
-                hatDebugger.print(String.format("\"%s\" ist nicht mit dem Server verbunden.", lNaman), 0);
+                hatDebugger.print(String.format("\"%s\" ist nicht mit dem Server verbunden.", lName), 0);
             }
         }
         return true;

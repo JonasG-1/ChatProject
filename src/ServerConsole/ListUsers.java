@@ -15,14 +15,12 @@ public class ListUsers implements Command {
     public boolean run(String pArgumente, ServerController pController, Console pConsole) {
         BenutzerVerwaltung lVerwaltung = pController.gibVerwaltung();
         StringBuilder lAusgang = new StringBuilder();
-        List<String> lNamen = lVerwaltung.gibNamenListe();
-        List<String> lAdressen = lVerwaltung.gibAdressenListe();
-        int lVerbundene = lAdressen.length();
-        int lAngemeldete = lNamen.length();
-        lNamen.toFirst();
-        while (lNamen.hasAccess()) {
-            lAusgang.append(lNamen.getContent()).append(", ");
-            lNamen.next();
+        String[] lNamen = lVerwaltung.gibNamen();
+        String[] lAdressen = lVerwaltung.gibAdressen();
+        int lAngemeldete = lNamen.length;
+        int lVerbundene = lAdressen.length;
+        for (String lNaman : lNamen) {
+            lAusgang.append(lNaman).append(", ");
         }
         if (lAusgang.length() > 2) {
             lAusgang.replace(lAusgang.length() - 2, lAusgang.length(), "");

@@ -1,165 +1,211 @@
 package ServerChat;
 
-import linearestrukturen.List;
-
-import java.util.HashMap;
+import ServerChat.Clients.Benutzer;
+import ServerChat.Clients.Verbindung;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BenutzerVerwaltung {
 
-    private final HashMap<String, String> zNamenZuAdressen;
-    private final HashMap<String, String> zAdressenZuNamen;
-    private final HashMap<String, List<String>> zAdressenZuAktionen;
-    private final List<String> zNamen;
-    private final List<String> zAdressen;
-    private final List<String> zAdminAdressen;
-    private final List<String> zGebannteAdressen;
+    private final List<Benutzer> zBenutzer;
+    private final List<Verbindung> zAktiveVerbindungen;
+    private final List<Verbindung> zAdminVerbindungen;
+    private final List<String> zGebannteIPs;
 
     public BenutzerVerwaltung() {
-        zNamenZuAdressen = new HashMap<>();
-        zAdressenZuNamen = new HashMap<>();
-        zAdressenZuAktionen = new HashMap<>();
-        zNamen = new List<>();
-        zAdressen = new List<>();
-        zAdminAdressen = new List<>();
-        zGebannteAdressen = new List<>();
+        zBenutzer = new ArrayList<>();
+        zAktiveVerbindungen = new ArrayList<>();
+        zAdminVerbindungen = new ArrayList<>();
+        zGebannteIPs = new ArrayList<>();
     }
 
     public void neueVerbindung(String pAdresse) {
-        zAdressen.append(pAdresse);
+        if (istAdmin(pAdresse)) {
+            try {
+                Verbindung lVerbindung = gibAdmin(pAdresse);
+                zAktiveVerbindungen.add(lVerbindung);
+            } catch (NoSuchFieldException lFehler) {
+                lFehler.printStackTrace();
+            }
+        } else {
+            zAktiveVerbindungen.add(new Verbindung(pAdresse));
+        }
     }
 
-    public void verbindungHinzufuegen(String pAdresse, String pName) {
-        zNamenZuAdressen.put(pName, pAdresse);
-        zAdressenZuNamen.put(pAdresse, pName);
-        zAdressenZuAktionen.put(pAdresse, new List<>());
-        zNamen.append(pName);
-    }
-
-    public void verbindungEntfernen(String pAdresse) {
+    public void benutzerHinzufuegen(String pAdresse, String pName) {
         if (istVerbunden(pAdresse)) {
-            zAdressen.toFirst();
-            while (zAdressen.hasAccess()) {
-                if (zAdressen.getContent().equals(pAdresse)) {
-                    zAdressen.remove();
-                }
-                zAdressen.next();
-            }
-        }
-        if (istAngemeldet(pAdresse)) {
-            String lName = zAdressenZuNamen.get(pAdresse);
-            zNamenZuAdressen.remove(lName);
-            zAdressenZuNamen.remove(pAdresse);
-            zAdressenZuAktionen.remove(pAdresse);
-            zNamen.toFirst();
-            while (zNamen.hasAccess()) {
-                if (zNamen.getContent().equals(lName)) {
-                    zNamen.remove();
-                }
-                zNamen.next();
+            try {
+                Verbindung lVerbindung = gibVerbindung(pAdresse);
+                Benutzer lBenutzer = new Benutzer(lVerbindung, pName, istAdmin(pAdresse));
+                zBenutzer.add(lBenutzer);
+            } catch (NoSuchFieldException lFehler) {
+                lFehler.printStackTrace();
             }
         }
     }
 
-    public boolean istAngemeldet(String pAdresse) {
-        return zAdressenZuNamen.containsKey(pAdresse);
+    public void entferneClient(String pAdresse) {
+        if (istVerbunden(pAdresse)) {
+            try {
+                Verbindung lVerbindung = gibVerbindung(pAdresse);
+                if (lVerbindung.istVerknuepft()) {
+                    Benutzer lBenutzer = lVerbindung.getBenutzer();
+                    lBenutzer.trenne();
+                    zBenutzer.remove(lBenutzer);
+                }
+                zAktiveVerbindungen.remove(lVerbindung);
+            } catch (NoSuchFieldException lFehler) {
+                lFehler.printStackTrace();
+            }
+        }
     }
 
     public boolean istVerbunden(String pAdresse) {
-        zAdressen.toFirst();
-        while (zAdressen.hasAccess()) {
-            if (zAdressen.getContent().equals(pAdresse)) {
+        for (Verbindung lVerbindung : zAktiveVerbindungen) {
+            if (lVerbindung.toString().equals(pAdresse)) {
                 return true;
             }
-            zAdressen.next();
+        }
+        return false;
+    }
+
+    public boolean istAngemeldet(String pAdresse) {
+        for (Benutzer lBenutzer : zBenutzer) {
+            if (lBenutzer.getAdresse().equals(pAdresse)) {
+                return true;
+            }
         }
         return false;
     }
 
     public boolean nameExistiert(String pName) {
-        return zNamenZuAdressen.containsKey(pName);
-    }
-
-    public String gibVerbindung(String pName) {
-        return zNamenZuAdressen.get(pName);
-    }
-
-    public String gibName(String pAdresse) {
-        return zAdressenZuNamen.get(pAdresse);
-    }
-
-    public List<String> gibAktionListe(String pAdresse) {
-        return zAdressenZuAktionen.get(pAdresse);
-    }
-
-    public List<String> gibNamenListe() {
-        return zNamen;
-    }
-
-    public List<String> gibAdressenListe() {
-        return zAdressen;
-    }
-
-    public void adminHinzufuegen(String pAdresse) {
-        zAdminAdressen.append(pAdresse);
-    }
-
-    public boolean istAdmin(String pAdresse, boolean pEntfernen) {
-        zAdminAdressen.toFirst();
-        while (zAdminAdressen.hasAccess()) {
-            if (zAdminAdressen.getContent().equals(pAdresse)) {
-                if (pEntfernen) {
-                    zAdminAdressen.remove();
-                }
+        for (Benutzer lBenutzer : zBenutzer) {
+            if (lBenutzer.getName().equals(pName)) {
                 return true;
             }
         }
         return false;
     }
 
-    public String[] gibAdmins() {
-        if (zAdminAdressen.length() == 0) {
-            return null;
+    public Verbindung gibVerbindung(String pAdresse) throws NoSuchFieldException {
+        for (Verbindung lVerbindung : zAktiveVerbindungen) {
+            if (lVerbindung.toString().equals(pAdresse)) {
+                return lVerbindung;
+            }
         }
-        zAdminAdressen.toFirst();
-        String[] lAdmins = new String[zAdminAdressen.length()];
-        for (int i = 0; i < lAdmins.length; i++) {
-            lAdmins[i] = zAdminAdressen.getContent();
-            zAdminAdressen.next();
+        throw new NoSuchFieldException("Keine aktive Verbindung mit der Adresse gefunden");
+    }
+
+    public String gibAdresse(String pName) throws NoSuchFieldException {
+        for (Benutzer lBenutzer : zBenutzer) {
+            if (lBenutzer.getName().equals(pName)) {
+                return lBenutzer.getAdresse();
+            }
+        }
+        throw new NoSuchFieldException("Keinen Benutzer mit dieser Adresse gefunden");
+    }
+
+    public String[] gibAdressen() {
+        String[] lAdressen = new String[zAktiveVerbindungen.size()];
+        for (int i = 0; i < zAktiveVerbindungen.size(); i++) {
+            lAdressen[i] = zAktiveVerbindungen.get(i).toString();
+        }
+        return lAdressen;
+    }
+
+    public String gibName(String pAdresse) throws NoSuchFieldException {
+        for (Benutzer lBenutzer : zBenutzer) {
+            if (lBenutzer.getAdresse().equals(pAdresse)) {
+                return lBenutzer.getName();
+            }
+        }
+        throw new NoSuchFieldException("Keinen Benutzer mit diesem Namen gefunden");
+    }
+
+    public String[] gibNamen() {
+        String[] lNamen = new String[zBenutzer.size()];
+        for (int i = 0; i < zBenutzer.size(); i++) {
+           lNamen[i] = zBenutzer.get(i).getName();
+        }
+        return lNamen;
+    }
+
+    public ArrayList<String> gibAktionListe(String pAdresse) throws NoSuchFieldException {
+        for (Benutzer lBenutzer : zBenutzer) {
+            if (lBenutzer.getAdresse().equals(pAdresse)) {
+                return lBenutzer.getAktionen();
+            }
+        }
+        throw new NoSuchFieldException("Keinen Benutzer mit dieser Adresse gefunden");
+    }
+
+    public void adminHinzufuegen(String pAdresse) {
+        if (istVerbunden(pAdresse)) {
+            try {
+                Verbindung lVerbindung = gibVerbindung(pAdresse);
+                zAdminVerbindungen.add(lVerbindung);
+            } catch (NoSuchFieldException lFehler) {
+                lFehler.printStackTrace();
+            }
+        } else {
+            zAdminVerbindungen.add(new Verbindung(pAdresse));
+        }
+    }
+
+    public boolean istAdmin(String pAdresse) {
+        for (Verbindung lVerbindung : zAdminVerbindungen) {
+            if (lVerbindung.toString().equals(pAdresse)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void entferneAdmin(String pAdresse) throws NoSuchFieldException {
+        Verbindung lVerbindung = gibAdmin(pAdresse);
+        zAdminVerbindungen.remove(lVerbindung);
+    }
+
+    public String[] gibAdminAdressen() {
+        String[] lAdmins = new String[zAdminVerbindungen.size()];
+        for (int i = 0; i < zAdminVerbindungen.size(); i++) {
+           lAdmins[i] = zAdminVerbindungen.get(i).toString();
         }
         return lAdmins;
     }
 
-    public boolean istGebannt(String pIP) {
-        zGebannteAdressen.toFirst();
-        while (zGebannteAdressen.hasAccess()) {
-            if (zGebannteAdressen.getContent().equals(pIP)) {
-                return true;
+    public Verbindung gibAdmin(String pAdresse) throws NoSuchFieldException {
+        for (Verbindung lVerbindung : zAdminVerbindungen) {
+            if (lVerbindung.toString().equals(pAdresse)) {
+                return lVerbindung;
             }
-            zGebannteAdressen.next();
         }
-        return false;
+        throw new NoSuchFieldException("Kein Admin mit dieser Adresse gefunden");
+    }
+
+    public boolean istGebannt(String pIP) {
+        return zGebannteIPs.contains(pIP);
     }
 
     public void bannHinzufuegen(String pIP) {
-        zGebannteAdressen.append(pIP);
+        zGebannteIPs.add(pIP);
     }
 
     public void bannEntfernen(String pIP) {
-        boolean lGebannt = istGebannt(pIP);
-        if (lGebannt) {
-            zGebannteAdressen.remove();
-        }
+        zGebannteIPs.remove(pIP);
     }
 
-    public List<String> gibAdressenMitIP(String pIP) {
-        List<String> lListe = new List<>();
-        zAdressen.toFirst();
-        while (zAdressen.hasAccess()) {
-            if (zAdressen.getContent().startsWith(pIP)) {
-                lListe.append(zAdressen.getContent());
+    public String[] gibAdressenMitIP(String pIP) {
+        List<String> lAdressen = new ArrayList<>();
+        for (Verbindung lVerbindungen : zAktiveVerbindungen) {
+            if (lVerbindungen.getIP().equals(pIP)) {
+                lAdressen.add(lVerbindungen.toString());
             }
-            zAdressen.next();
         }
-        return lListe;
+        String[] lAdressenArray = new String[lAdressen.size()];
+        for (int i = 0; i < lAdressen.size(); i++) {
+            lAdressenArray[i] = lAdressen.get(i);
+        }
+        return lAdressenArray;
     }
 }

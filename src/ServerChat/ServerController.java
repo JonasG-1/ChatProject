@@ -4,6 +4,8 @@ import ServerConsole.*;
 import Constants.GLOBAL_CONST;
 import linearestrukturen.List;
 
+import java.util.ArrayList;
+
 public class ServerController {
 
     private final static int PORT = 8888;
@@ -60,10 +62,26 @@ public class ServerController {
         if (!hatVerwaltung.istAngemeldet(lAdresse)) {
             return;
         }
-        List<String> lAktionen = hatVerwaltung.gibAktionListe(lAdresse);
-        lAktionen.toFirst();
-        String lAktion = lAktionen.getContent();
-        lAktionen.remove();
+        ArrayList<String> lAktionen = null;
+        try {
+            lAktionen = hatVerwaltung.gibAktionListe(lAdresse);
+        } catch (NoSuchFieldException lFehler) {
+            lFehler.printStackTrace();
+        }
+        String lAktion = null;
+        if (lAktionen != null) {
+            try {
+                lAktion = lAktionen.get(0);
+            } catch (Exception ignored) {
+            }
+        } else {
+            return;
+        }
+        if (lAktion == null) {
+            return;
+        }
+
+        lAktionen.remove(0);
         if (pTyp.equals(GLOBAL_CONST.CLIENT_BEFEHLE.OK)) {
             hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.AKTION_ERFOLGREICH, lAdresse, lAktion, pArgumente));
         } else if (pTyp.equals(GLOBAL_CONST.CLIENT_BEFEHLE.ERR)) {
@@ -87,7 +105,7 @@ public class ServerController {
             return GLOBAL_CONST.ERR + GLOBAL_CONST.NAME_ZEICHEN;
         }
 
-        hatVerwaltung.verbindungHinzufuegen(lAdresse, pName);
+        hatVerwaltung.benutzerHinzufuegen(lAdresse, pName);
         zSendeListe = true;
         hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.ANMELDUNG, lAdresse, pName));
         return GLOBAL_CONST.OK + String.format(GLOBAL_CONST.ANGEMELDET, pName);
@@ -95,15 +113,15 @@ public class ServerController {
 
     public void broadcastList() {
         StringBuilder lAusgang = new StringBuilder(GLOBAL_CONST.SERVER_BEFEHLE.AUFLISTEN + " ");
-        List<String> lNamen = hatVerwaltung.gibNamenListe();
-        lAusgang.append(lNamen.length()).append(",");
-        lNamen.toFirst();
-        while (lNamen.hasAccess()) {
-            lAusgang.append(lNamen.getContent()).append(",");
-            lNamen.next();
+        String[] lNamen = hatVerwaltung.gibNamen();
+        lAusgang.append(lNamen.length).append(",");
+        for (int i = 0; i < lNamen.length; i++) {
+           lAusgang.append(lNamen[i]);
+           if (i < lNamen.length - 1) {
+                lAusgang.append(",");
+           }
         }
         hatDebugger.debug(GLOBAL_CONST.DEBUG_NACHRICHTEN.LISTE);
-        lAusgang.replace(lAusgang.length() - 1, lAusgang.length(), "");
         alleAnhaengen(lAusgang.toString());
         hatServer.sendToAll(lAusgang.toString());
     }
@@ -117,7 +135,12 @@ public class ServerController {
         if (lNachrichtCheck != null) {
             return lNachrichtCheck;
         }
-        String lName = hatVerwaltung.gibName(lAdresse);
+        String lName = null;
+        try {
+            lName = hatVerwaltung.gibName(lAdresse);
+        } catch (NoSuchFieldException lFehler) {
+            lFehler.printStackTrace();
+        }
         String lAusgang = GLOBAL_CONST.SERVER_BEFEHLE.NACHRICHT + " " + lName + " " + pNachricht;
         alleAnhaengen(lAusgang);
         hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.NACHRICHT, lAdresse, lName, pNachricht));
@@ -148,15 +171,33 @@ public class ServerController {
         if (lNachrichtCheck != null) {
             return lNachrichtCheck;
         }
-        String lAdresseEmpfaenger = hatVerwaltung.gibVerbindung(lNameEmpfaenger);
+        String lAdresseEmpfaenger;
+        try {
+            lAdresseEmpfaenger = hatVerwaltung.gibAdresse(lNameEmpfaenger);
+        } catch (NoSuchFieldException lFehler) {
+            lFehler.printStackTrace();
+            return GLOBAL_CONST.ERR + GLOBAL_CONST.FEHLER_FATAL;
+        }
         String lIPEmpfaenger = gibIP(lAdresseEmpfaenger);
         int lPortEmpfaenger = gibPort(lAdresseEmpfaenger);
 
-        String lNameSender = hatVerwaltung.gibName(lAdresseSender);
+        String lNameSender;
+        try {
+            lNameSender = hatVerwaltung.gibName(lAdresseSender);
+        } catch (NoSuchFieldException lFehler) {
+            lFehler.printStackTrace();
+            return GLOBAL_CONST.ERR + GLOBAL_CONST.FEHLER_FATAL;
+        }
 
         String lAusgang = GLOBAL_CONST.SERVER_BEFEHLE.PRIVATE_NACHRICHT + " " + lNameSender + " " + lNachricht;
 
-        hatVerwaltung.gibAktionListe(lAdresseEmpfaenger).append(lAusgang);
+        try {
+            hatVerwaltung.gibAktionListe(lAdresseEmpfaenger).add(lAusgang);
+            hatVerwaltung.gibAktionListe(lAdresseSender).add(lAusgang);
+        } catch (NoSuchFieldException lFehler) {
+            lFehler.printStackTrace();
+            return GLOBAL_CONST.ERR + GLOBAL_CONST.FEHLER_FATAL;
+        }
         hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.PRIVATE_NACHRICHT, lAdresseSender, lNameSender, lNameEmpfaenger, lAdresseEmpfaenger, lNachricht));
         if (!lNameSender.equals(lNameEmpfaenger)) {
             hatServer.send(pIP, pPort, lAusgang);
@@ -183,44 +224,74 @@ public class ServerController {
             hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.VERBINDUNG_TRENNEN, lAdresse));
         }
 
-        String lName = hatVerwaltung.gibName(lAdresse);
-        if (hatVerwaltung.nameExistiert(lName)) {
+        String lName = null;
+        if (hatVerwaltung.istAngemeldet(lAdresse)) {
             zSendeListe = true;
+            try {
+                lName = hatVerwaltung.gibName(lAdresse);
+            } catch (NoSuchFieldException lFehler) {
+                lFehler.printStackTrace();
+                hatDebugger.print(
+                        "Fataler Fehler in verbindungTrennen. " +
+                                "Eine Verbindung konnte nicht richtig getrennt werden.",
+                        0
+                );
+            }
         }
-        hatVerwaltung.verbindungEntfernen(lAdresse);
-
+        hatVerwaltung.entferneClient(lAdresse);
         if (!hatVerwaltung.istGebannt(pIP)) {
             hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.VERBINDUNG_GETRENNT, lAdresse, lName));
         }
     }
 
     private void alleAnhaengen(String pAktion) {
-        List<String> lNamen = hatVerwaltung.gibNamenListe();
-        lNamen.toFirst();
-        while (lNamen.hasAccess()) {
+        String[] lNamen = hatVerwaltung.gibNamen();
+        for (String lNaman : lNamen) {
             try {
-                hatVerwaltung.gibAktionListe(hatVerwaltung.gibVerbindung(lNamen.getContent())).append(pAktion);
-            } catch (Exception ignored) {
+                hatVerwaltung.gibAktionListe(hatVerwaltung.gibAdresse(lNaman)).add(pAktion);
+            } catch (NoSuchFieldException lFehler) {
+                lFehler.printStackTrace();
             }
-            lNamen.next();
         }
     }
 
     public boolean istAdmin(String pAdresse, boolean pEntfernen) {
-        return hatVerwaltung.istAdmin(pAdresse, pEntfernen);
+        boolean lIstAdmin = hatVerwaltung.istAdmin(pAdresse);
+        if (lIstAdmin && pEntfernen) {
+            try {
+                hatVerwaltung.entferneAdmin(pAdresse);
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+                hatDebugger.print(
+                        "Fataler Fehler in istAdmin. Ein Admin konnte nicht entfernt werden.", 0
+                );
+            }
+        }
+        return lIstAdmin;
     }
 
     public String addAdmin(String pName) {
         if (!hatVerwaltung.istAngemeldet(pName)) {
            return "-Name existiert nicht.";
         }
-        String lAdresse = hatVerwaltung.gibVerbindung(pName);
+        String lAdresse;
+        try {
+            lAdresse = hatVerwaltung.gibAdresse(pName);
+        } catch (NoSuchFieldException lFehler) {
+            lFehler.printStackTrace();
+            return "-Fataler Fehler.";
+        }
         if (istAdmin(lAdresse, false)) {
             return "-Nutzer ist bereits ein Administrator.";
         }
         String lIP = gibIP(lAdresse);
         int lPort = gibPort(lAdresse);
-        hatVerwaltung.gibAktionListe(lAdresse).append(GLOBAL_CONST.SERVER_BEFEHLE.ADMIN_ERTEILT);
+        try {
+            hatVerwaltung.gibAktionListe(lAdresse).add(GLOBAL_CONST.SERVER_BEFEHLE.ADMIN_ERTEILT);
+        } catch (NoSuchFieldException lFehler) {
+            lFehler.printStackTrace();
+            return "-Fataler Fehler.";
+        }
         hatServer.send(lIP, lPort, GLOBAL_CONST.SERVER_BEFEHLE.ADMIN_ERTEILT);
         hatVerwaltung.adminHinzufuegen(lAdresse);
         return "+Nutzer wurde erfolgreich hinzugefügt.";
@@ -230,11 +301,23 @@ public class ServerController {
         if (!hatVerwaltung.istAngemeldet(pName)) {
             return "-Name existiert nicht.";
         }
-        String lAdresse = hatVerwaltung.gibVerbindung(pName);
+        String lAdresse;
+        try {
+            lAdresse = hatVerwaltung.gibAdresse(pName);
+            hatVerwaltung.entferneAdmin(lAdresse);
+        } catch (NoSuchFieldException lFehler) {
+            lFehler.printStackTrace();
+            return "-Fataler Fehler.";
+        }
         if (istAdmin(lAdresse, true)) {
             String lIP = gibIP(lAdresse);
             int lPort = gibPort(lAdresse);
-            hatVerwaltung.gibAktionListe(lAdresse).append(GLOBAL_CONST.SERVER_BEFEHLE.ADMIN_ENTZOGEN);
+            try {
+                hatVerwaltung.gibAktionListe(lAdresse).add(GLOBAL_CONST.SERVER_BEFEHLE.ADMIN_ENTZOGEN);
+            } catch (NoSuchFieldException lFehler) {
+                lFehler.printStackTrace();
+                return "-Fataler Fehler. Konnte Client nicht informieren. Admin wurde dennoch entfernt";
+            }
             hatServer.send(lIP, lPort, GLOBAL_CONST.SERVER_BEFEHLE.ADMIN_ENTZOGEN);
             return "+Nutzer wurde erfolgreich entfernt.";
         }
@@ -243,12 +326,17 @@ public class ServerController {
 
     public String listAdmins() {
         StringBuilder lAdmins = new StringBuilder();
-        String[] lListe = hatVerwaltung.gibAdmins();
+        String[] lListe = hatVerwaltung.gibAdminAdressen();
         if (lListe == null) {
             return "";
         }
         for (String lAdresse : lListe) {
-            String lName = hatVerwaltung.gibName(lAdresse);
+            String lName = null;
+            try {
+                lName = hatVerwaltung.gibName(lAdresse);
+            } catch (NoSuchFieldException lFehler) {
+                lFehler.printStackTrace();
+            }
             lAdmins.append(lAdresse).append(" [").append(lName).append("]");
             lAdmins.append(", ");
         }

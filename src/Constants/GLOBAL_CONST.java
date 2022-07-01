@@ -20,6 +20,7 @@ public interface GLOBAL_CONST {
     String NAME_FEHLT = "Der angegebene Name wurde nicht gefunden. Name: \"%s\"";
     String VERBINDUNG_GETRENNT = "Die Verbindung wurde getrennt.";
     String NUTZER_GEBANNT = "Diese Adresse wurde vom Server gebannt.";
+    String FEHLER_FATAL = "Ein fataler Fehler ist aufgetreten. Die Aktion wurde abgebrochen.";
 
     interface CLIENT_BEFEHLE {
         String OK = "+OK";

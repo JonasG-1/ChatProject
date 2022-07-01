@@ -16,8 +16,13 @@ public class Bann implements Command {
         BenutzerVerwaltung lVerwaltung = pController.gibVerwaltung();
         for (String lName : lNamen) {
             if (lVerwaltung.nameExistiert(lName)) {
-                lVerwaltung.bannHinzufuegen(pController.gibIP(lVerwaltung.gibVerbindung(lName)));
-                boolean lErfolg = pController.nutzerKicken(lVerwaltung.gibVerbindung(lName));
+                boolean lErfolg = false;
+                try {
+                    lVerwaltung.bannHinzufuegen(pController.gibIP(lVerwaltung.gibAdresse(lName)));
+                    lErfolg = pController.nutzerKicken(lVerwaltung.gibAdresse(lName));
+                } catch (NoSuchFieldException lFehler) {
+                    lFehler.printStackTrace();
+                }
                 if (!lErfolg) {
                     hatDebugger.print(String.format("\"%s\" konnte nicht gebannt werden.", lName), 0);
                 } else {
