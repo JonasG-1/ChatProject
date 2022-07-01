@@ -61,6 +61,11 @@ Klonen des Projekts in der Befehlszeile mit:
 
 ### Starten
 
+- Zunächst müssen die mitgelieferten Bibliotheken (libraries Ordner) importiert werden
+  - IntelliJ: File > Project Structure > Libraries > New Project Library > Java
+  - BlueJ: Bibliotheken in den "userlib" Ordner ziehen, dort wo BlueJ gespeichert ist
+
+
 - Starten des Servers über "main"-Methode in "StartServer.java" im Packet "ServerChat".
 - Starten des Clients über "main"-Methode in "StartClient.java" im Packet "ClientChat".
 
