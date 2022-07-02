@@ -2,7 +2,6 @@ package ServerConsole;
 
 import ServerChat.BenutzerVerwaltung;
 import ServerChat.ServerController;
-import linearestrukturen.List;
 
 
 public class BannIP implements Command {
@@ -24,7 +23,11 @@ public class BannIP implements Command {
             lVerwaltung.bannHinzufuegen(lIP);
             String[] lListe = lVerwaltung.gibAdressenMitIP(lIP);
             for (String s : lListe) {
-                pController.nutzerKicken(s);
+                if (pController.kickeNutzer(s)) {
+                    hatDebugger.print(String.format("\"%s\" wurde gebannt.", s), 1);
+                } else {
+                    hatDebugger.print(String.format("\"%s\" konnte nicht gebannt werden.", s), 0);
+                }
             }
             hatDebugger.print(String.format("\"%s\" wurde gebannt.", lIP), 1);
         }

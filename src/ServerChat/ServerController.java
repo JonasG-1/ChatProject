@@ -2,7 +2,6 @@ package ServerChat;
 
 import ServerConsole.*;
 import Constants.GLOBAL_CONST;
-import linearestrukturen.List;
 
 import java.util.ArrayList;
 
@@ -21,15 +20,19 @@ public class ServerController {
     public ServerController(boolean pDebug) {
         hatDebugger = new Debugger();
         hatDebugger.setzeDebug(pDebug);
-        Console hatConsole = new Console();
-        hatConsole.addController(this);
-        hatConsole.start();
+        starteKonsole();
         hatVerwaltung = new BenutzerVerwaltung();
         zVerboteneZeichen = new String[]{"\\s+", ",", ":", " ", ".", "Admin", "Konsole", "Console"};
         zVerboteneZeichenNachricht = new String[]{};
 
         hatServer = new ChatServer(PORT, false, this);
         hatDebugger.debug("Server gestartet.");
+    }
+
+    private void starteKonsole() {
+        Console hatConsole = new Console();
+        hatConsole.addController(this);
+        hatConsole.start();
     }
 
     public String neueVerbindung(String pIP) {
@@ -43,68 +46,37 @@ public class ServerController {
         switch (pBefehl) {
             case GLOBAL_CONST.CLIENT_BEFEHLE.OK:
             case GLOBAL_CONST.CLIENT_BEFEHLE.ERR:
-                handleAnswer(pBefehl, pArgumente, pIP, pPort);
-                break;
+                bearbeiteClientAntwort(pBefehl, pArgumente, pIP, pPort);
+                return "";
             case GLOBAL_CONST.CLIENT_BEFEHLE.NAME:
-                return addConnection(pArgumente, pIP, pPort);
+                return fuegeVerbindungHinzu(pArgumente, pIP, pPort);
             case GLOBAL_CONST.CLIENT_BEFEHLE.NACHRICHT:
-                return sendMessage(pArgumente, pIP, pPort);
+                return sendeChatNachricht(pArgumente, pIP, pPort);
             case GLOBAL_CONST.CLIENT_BEFEHLE.PRIVATE_NACHRICHT:
-                return sendPrivateMessage(pArgumente, pIP, pPort);
+                return sendePrivateChatNachricht(pArgumente, pIP, pPort);
             default:
                 return GLOBAL_CONST.ERR + GLOBAL_CONST.BEFEHL_KEIN;
         }
-        return null;
     }
 
-    private void handleAnswer(String pTyp, String pArgumente, String pIP, int pPort) {
+    private void bearbeiteClientAntwort(String pTyp, String pArgumente, String pIP, int pPort) {
         String lAdresse = erstelleAdresse(pIP, pPort);
         if (!hatVerwaltung.istAngemeldet(lAdresse)) {
             return;
         }
-        ArrayList<String> lAktionen = null;
-        try {
-            lAktionen = hatVerwaltung.gibAktionListe(lAdresse);
-        } catch (NoSuchFieldException lFehler) {
-            lFehler.printStackTrace();
-        }
-        String lAktion = null;
-        if (lAktionen != null) {
-            try {
-                lAktion = lAktionen.get(0);
-            } catch (Exception ignored) {
-            }
-        } else {
-            return;
-        }
+        String lAktion = gibAktuelleAktion(lAdresse);
         if (lAktion == null) {
             return;
         }
-
-        lAktionen.remove(0);
-        if (pTyp.equals(GLOBAL_CONST.CLIENT_BEFEHLE.OK)) {
-            hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.AKTION_ERFOLGREICH, lAdresse, lAktion, pArgumente));
-        } else if (pTyp.equals(GLOBAL_CONST.CLIENT_BEFEHLE.ERR)) {
-            hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.AKTION_FEHLGESCHLAGEN, lAdresse, lAktion, pArgumente));
-        }
+        loggeAktion(pTyp, pArgumente, lAdresse, lAktion);
     }
 
-    private String addConnection(String pName, String pIP, int pPort) {
+    private String fuegeVerbindungHinzu(String pName, String pIP, int pPort) {
         String lAdresse = erstelleAdresse(pIP, pPort);
-        for (String lZeichen : zVerboteneZeichen) {
-            if (pName.contains(lZeichen)) {
-                return GLOBAL_CONST.ERR + String.format(GLOBAL_CONST.NAME_ZEICHEN, lZeichen);
-            }
+        String lErgebnis = ueberpruefeName(pName, lAdresse);
+        if (lErgebnis.startsWith(GLOBAL_CONST.ERR)) {
+            return lErgebnis;
         }
-        if (hatVerwaltung.istAngemeldet(lAdresse)) {
-            verbindungTrennen(pIP, pPort);
-            return GLOBAL_CONST.ERR + GLOBAL_CONST.BEREITS_VERBUNDEN;
-        } else if (hatVerwaltung.nameExistiert(pName)) {
-            return GLOBAL_CONST.ERR + GLOBAL_CONST.NAME_EXISTIERT;
-        } else if (pName.isEmpty()) {
-            return GLOBAL_CONST.ERR + GLOBAL_CONST.NAME_ZEICHEN;
-        }
-
         hatVerwaltung.benutzerHinzufuegen(lAdresse, pName);
         zSendeListe = true;
         hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.ANMELDUNG, lAdresse, pName));
@@ -126,14 +98,10 @@ public class ServerController {
         hatServer.sendToAll(lAusgang.toString());
     }
 
-    private String sendMessage(String pNachricht, String pIP, int pPort) {
+    private String sendeChatNachricht(String pNachricht, String pIP, int pPort) {
         String lAdresse = erstelleAdresse(pIP, pPort);
         if (!hatVerwaltung.istAngemeldet(lAdresse)) {
             return GLOBAL_CONST.ERR + GLOBAL_CONST.NICHT_ANGEMELDET;
-        }
-        String lNachrichtCheck = checkMessage(pNachricht);
-        if (lNachrichtCheck != null) {
-            return lNachrichtCheck;
         }
         String lName = null;
         try {
@@ -141,14 +109,15 @@ public class ServerController {
         } catch (NoSuchFieldException lFehler) {
             lFehler.printStackTrace();
         }
-        String lAusgang = GLOBAL_CONST.SERVER_BEFEHLE.NACHRICHT + " " + lName + " " + pNachricht;
-        alleAnhaengen(lAusgang);
-        hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.NACHRICHT, lAdresse, lName, pNachricht));
-        hatServer.sendToAll(lAusgang);
+
+        if (ueberpruefeNachricht(pNachricht)) {
+            return GLOBAL_CONST.ERR;
+        }
+        sendeNachrichtAls(pNachricht, lAdresse, lName);
         return GLOBAL_CONST.OK + GLOBAL_CONST.NACHRICHT_UEBERMITTELT;
     }
 
-    private String sendPrivateMessage(String pArgumente, String pIP, int pPort) {
+    private String sendePrivateChatNachricht(String pArgumente, String pIP, int pPort) {
         String lAdresseSender = erstelleAdresse(pIP, pPort);
         if (!hatVerwaltung.istAngemeldet(lAdresseSender)) {
             return GLOBAL_CONST.ERR + GLOBAL_CONST.NICHT_ANGEMELDET;
@@ -167,9 +136,8 @@ public class ServerController {
         } catch (Exception ignored) {
             return GLOBAL_CONST.ERR + GLOBAL_CONST.NACHRICHT_LEER;
         }
-        String lNachrichtCheck = checkMessage(lNachricht);
-        if (lNachrichtCheck != null) {
-            return lNachrichtCheck;
+        if (ueberpruefeNachricht(lNachricht)) {
+            return GLOBAL_CONST.ERR;
         }
         String lAdresseEmpfaenger;
         try {
@@ -206,18 +174,6 @@ public class ServerController {
         return GLOBAL_CONST.OK + GLOBAL_CONST.NACHRICHT_UEBERMITTELT;
     }
 
-    private String checkMessage(String lNachricht) {
-        if (lNachricht.isEmpty()) {
-            return GLOBAL_CONST.ERR + GLOBAL_CONST.NACHRICHT_LEER;
-        }
-        for (String lZeichen : zVerboteneZeichenNachricht) {
-            if (lNachricht.contains(lZeichen)) {
-                return GLOBAL_CONST.ERR + String.format(GLOBAL_CONST.NACHRICHT_ZEICHEN, lZeichen);
-            }
-        }
-        return null;
-    }
-
     public void verbindungTrennen(String pIP, int pPort) {
         String lAdresse = erstelleAdresse(pIP, pPort);
         if (!hatVerwaltung.istGebannt(pIP)) {
@@ -242,6 +198,13 @@ public class ServerController {
         if (!hatVerwaltung.istGebannt(pIP)) {
             hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.VERBINDUNG_GETRENNT, lAdresse, lName));
         }
+    }
+
+    public void sendeNachrichtAls(String pNachricht, String pAdresse, String pName) {
+        String lAusgang = GLOBAL_CONST.SERVER_BEFEHLE.NACHRICHT + " " + pName + " " + pNachricht;
+        alleAnhaengen(lAusgang);
+        hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.NACHRICHT, pAdresse, pName, pNachricht));
+        hatServer.sendToAll(lAusgang);
     }
 
     private void alleAnhaengen(String pAktion) {
@@ -340,7 +303,9 @@ public class ServerController {
             lAdmins.append(lAdresse).append(" [").append(lName).append("]");
             lAdmins.append(", ");
         }
-        lAdmins.replace(lAdmins.length() - 2, lAdmins.length(), "");
+        if (lAdmins.length() > 2) {
+            lAdmins.replace(lAdmins.length() - 2, lAdmins.length(), "");
+        }
         return lAdmins.toString();
     }
 
@@ -354,7 +319,7 @@ public class ServerController {
         hatDebugger.debug("Der Port \"" + PORT + "\" wurde freigegeben.");
     }
 
-    public boolean nutzerKicken(String pAdresse) {
+    public boolean kickeNutzer(String pAdresse) {
         if (!hatVerwaltung.istVerbunden(pAdresse)) {
             return false;
         }
@@ -362,7 +327,6 @@ public class ServerController {
         int lPort = gibPort(pAdresse);
         hatServer.send(lIP, lPort, GLOBAL_CONST.SERVER_BEFEHLE.TRENNEN);
         hatServer.closeConnection(lIP, lPort);
-        hatDebugger.debug("Test");
         return true;
     }
 
@@ -378,10 +342,6 @@ public class ServerController {
         return hatVerwaltung;
     }
 
-    public ChatServer gibServer() {
-        return hatServer;
-    }
-
     public String gibIP(String pAdresse) {
         String[] lAdresse = pAdresse.split(":");
         return lAdresse[0];
@@ -394,5 +354,85 @@ public class ServerController {
 
     public String erstelleAdresse(String pIP, int pPort) {
         return pIP + ":" + pPort;
+    }
+
+
+    private void loggeAktion(String pTyp, String pArgumente, String lAdresse, String lAktion) {
+        if (pTyp.equals(GLOBAL_CONST.CLIENT_BEFEHLE.OK)) {
+            hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.AKTION_ERFOLGREICH, lAdresse, lAktion, pArgumente));
+        } else if (pTyp.equals(GLOBAL_CONST.CLIENT_BEFEHLE.ERR)) {
+            hatDebugger.debug(String.format(GLOBAL_CONST.DEBUG_NACHRICHTEN.AKTION_FEHLGESCHLAGEN, lAdresse, lAktion, pArgumente));
+        }
+    }
+
+    private String gibAktuelleAktion(String pAdresse) {
+        ArrayList<String> lAktionen = gibClientAktionenListe(pAdresse);
+        String lAktion = null;
+        if (lAktionen != null) {
+            try {
+                lAktion = lAktionen.get(0);
+                lAktionen.remove(0);
+            } catch (Exception ignored) {
+            }
+        }
+        return lAktion;
+    }
+
+    private ArrayList<String> gibClientAktionenListe(String pAdresse) {
+        ArrayList<String> lAktionen = null;
+        try {
+            lAktionen = hatVerwaltung.gibAktionListe(pAdresse);
+        } catch (NoSuchFieldException lFehler) {
+            lFehler.printStackTrace();
+        }
+        return lAktionen;
+    }
+
+    private String ueberpruefeName(String pName, String pAdresse) {
+        String lZeichen = ueberpruefeNameZeichen(pName);
+        if (lZeichen.startsWith(GLOBAL_CONST.ERR)) {
+            return lZeichen;
+        }
+        String lGespeichert = ueberpruefeNameGespeichert(pName, pAdresse);
+        if (lGespeichert.startsWith(GLOBAL_CONST.ERR)) {
+            return lGespeichert;
+        }
+        return GLOBAL_CONST.OK;
+    }
+
+    private String ueberpruefeNameGespeichert(String pName, String pAdresse) {
+        String lIP = gibIP(pAdresse);
+        int lPort = gibPort(pAdresse);
+        if (hatVerwaltung.istAngemeldet(pAdresse)) {
+            verbindungTrennen(lIP, lPort);
+            return GLOBAL_CONST.ERR + GLOBAL_CONST.BEREITS_VERBUNDEN;
+        } else if (hatVerwaltung.nameExistiert(pName)) {
+            return GLOBAL_CONST.ERR + GLOBAL_CONST.NAME_EXISTIERT;
+        }
+        return GLOBAL_CONST.OK;
+    }
+
+    private String ueberpruefeNameZeichen(String pName) {
+        if (pName.isEmpty()) {
+            return GLOBAL_CONST.ERR + GLOBAL_CONST.NAME_ZEICHEN;
+        }
+        for (String lZeichen : zVerboteneZeichen) {
+            if (pName.contains(lZeichen)) {
+                return GLOBAL_CONST.ERR + String.format(GLOBAL_CONST.NAME_ZEICHEN, lZeichen);
+            }
+        }
+        return GLOBAL_CONST.OK;
+    }
+
+    private boolean ueberpruefeNachricht(String pNachricht) {
+        if (pNachricht.isEmpty()) {
+            return true;
+        }
+        for (String lZeichen : zVerboteneZeichenNachricht) {
+            if (pNachricht.contains(lZeichen)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

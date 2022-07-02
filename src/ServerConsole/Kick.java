@@ -18,7 +18,7 @@ public class Kick implements Command {
             if (lVerwaltung.nameExistiert(lName)) {
                 boolean lErfolg = false;
                 try {
-                    lErfolg = pController.nutzerKicken(lVerwaltung.gibAdresse(lName));
+                    lErfolg = pController.kickeNutzer(lVerwaltung.gibAdresse(lName));
                 } catch (NoSuchFieldException lFehler) {
                     lFehler.printStackTrace();
                 }

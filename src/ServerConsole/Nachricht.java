@@ -13,10 +13,9 @@ public class Nachricht implements Command {
 
     @Override
     public boolean run(String pArgumente, ServerController pController, Console pConsole) {
-        ChatServer lServer = pController.gibServer();
+        String instanceName = pConsole.getInstanceName();
         if (!pArgumente.isEmpty()) {
-            String lBefehl = GLOBAL_CONST.SERVER_BEFEHLE.NACHRICHT + " Konsole ";
-            lServer.sendToAll(lBefehl + pArgumente);
+            pController.sendeNachrichtAls(pArgumente, instanceName, instanceName);
             hatDebugger.print("Nachricht gesendet.", 1);
         } else {
             hatDebugger.print("Die Nachricht darf nicht leer sein.", 0);

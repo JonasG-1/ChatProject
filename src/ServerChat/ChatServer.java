@@ -50,7 +50,7 @@ public class ChatServer extends Server {
         } catch (Exception ignored) {
         }
         String lAntwort = kenntController.processCommand(lBefehl, lArgumente, pIP, pPort);
-        if (lAntwort != null) {
+        if (lAntwort != null && !lAntwort.isEmpty()) {
             send(pIP, pPort, lAntwort);
         }
         if (kenntController.gibSendeListe()) {

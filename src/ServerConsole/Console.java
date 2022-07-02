@@ -14,7 +14,13 @@ public class Console extends Thread {
     boolean lLaeuft = true;
 
     public void addController(ServerController pController) {
-        kenntController = pController;
+        Debugger hatDebugger = new Debugger();
+        if (kenntController == null) {
+            kenntController = pController;
+            hatDebugger.print("Controller verknüpft.", 1);
+        } else {
+            hatDebugger.print("Controller ist bereits verknüpft.", 0);
+        }
     }
 
     private void setupCommands() {
@@ -38,17 +44,17 @@ public class Console extends Thread {
             String lEingabe;
             while (lLaeuft) {
                 lEingabe = lLeser.readLine();
-                int lLeer = lEingabe.indexOf(" ");
-                boolean lAusgabe;
-                if (lLeer == -1) {
-                    lAusgabe = befehl(lEingabe, "");
+                if (!isControllerConnected()) {
+                    hatDebugger.print("Der Controller hat sich noch nicht verbunden.", 0);
                 } else {
-                    String lBefehl = lEingabe.substring(0, lLeer);
-                    String lArgumente = lEingabe.substring(lLeer + 1);
-                    lAusgabe = befehl(lBefehl, lArgumente);
-                }
-                if (!lAusgabe) {
-                    hatDebugger.print("Der Eingegebene Befehl konnte nicht verarbeitet werden.", 0);
+                    if (lEingabe != null) {
+                        boolean lAusgabe = bearbeiteBefehl(lEingabe);
+                        if (!lAusgabe) {
+                            hatDebugger.print("Der Eingegebene Befehl konnte nicht verarbeitet werden.", 0);
+                        }
+                    } else {
+                        hatDebugger.print("Ungültige Eingabe.", 0);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -69,5 +75,26 @@ public class Console extends Thread {
             hatBefehle.next();
         }
         return false;
+    }
+
+    public String getInstanceName() {
+        return "Konsole";
+    }
+
+    private boolean isControllerConnected() {
+        return kenntController != null;
+    }
+
+    private boolean bearbeiteBefehl(String lEingabe) {
+        int lLeer = lEingabe.indexOf(" ");
+        boolean lAusgabe;
+        if (lLeer == -1) {
+            lAusgabe = befehl(lEingabe, "");
+        } else {
+            String lBefehl = lEingabe.substring(0, lLeer);
+            String lArgumente = lEingabe.substring(lLeer + 1);
+            lAusgabe = befehl(lBefehl, lArgumente);
+        }
+        return lAusgabe;
     }
 }
